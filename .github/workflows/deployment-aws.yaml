@@ -1,0 +1,45 @@
+name: Deploy CDK stack to AWS
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '.github/workflows/check-pull-request.yaml'
+      - 'README.md'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+
+      - name: Install nodejs
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+
+      - name: Setup NPM cache
+        uses: c-hive/gha-npm-cache@v1
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Node Tests
+        run: npm test
+
+      - name: CDK Bootstrap
+        run: |
+          npx cdk bootstrap
+
+      - name: CDK Github Stack Deploy
+        run: |
+          npx cdk synth
+          npx cdk deploy GithubStack --require-approval never
